@@ -10,7 +10,7 @@
 // A cycle exists when:
 //   batsman A holds crease[0] and wants crease[1]
 //   batsman B holds crease[1] and wants crease[0]
-// → Both are blocked waiting for each other → circular wait → DEADLOCK.
+// -> Both are blocked waiting for each other -> circular wait -> DEADLOCK.
 // Resolution: randomly pick one as the victim (Run Out), wake both.
 
 void* DeadlockDetector(void* arg) {
@@ -41,7 +41,7 @@ void* DeadlockDetector(void* arg) {
                       << " holds End-1, wants End-2\n"
                       << "[DEADLOCK]   " << player_name(current_team, b)
                       << " holds End-2, wants End-1\n"
-                      << "[DEADLOCK] Umpire (kernel) kills → "
+                      << "[DEADLOCK] Umpire (kernel) kills -> "
                       << victim_name << " is RUN OUT\n";
 
             GanttLogger::log(victim_name, "DEADLOCK", "RUNOUT");

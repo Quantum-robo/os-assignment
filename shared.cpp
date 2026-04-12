@@ -4,10 +4,9 @@
 #include <string>
 
 // Scheduler toggle:
-// true  → SJF: tail-enders enter in descending ID order (worst batter first)
-// false → FCFS: tail-enders enter in ascending ID order (natural order)
-bool sjf_scheduler = true;
-
+// true  -> SJF: tail-enders enter in descending ID order (worst batter first)
+// false -> FCFS: tail-enders enter in ascending ID order (natural order)
+bool sjf_scheduler = false;
 // Mutex
 pthread_mutex_t pitch_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t umpire_lock = PTHREAD_MUTEX_INITIALIZER;
