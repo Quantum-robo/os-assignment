@@ -18,7 +18,7 @@ void wait_match_start_bat(){
 
 void wait_for_batsman_spot(int id){
     pthread_mutex_lock(&pitch_lock);
-    // Wait until: bat_order[position] == my ID AND a spot is free (SJF-aware)
+    // Wait until: bat_order[position] == my ID AND a spot is free
     while(!match_end && (next_bat_order > 11 ||
           bat_order[next_bat_order] != id || (striker_id!=0 && non_striker_id!=0))){
         pthread_cond_wait(&waiting_for_batsman_spot,&pitch_lock);
@@ -106,7 +106,7 @@ bool attempt_run(int id, PitchSide side) {
               << ", wants End-" << (dst+1) << "\n";
 
     pthread_mutex_lock(&rag_lock);
-    batsman_wants[id] = dst;   // RAG edge: id → crease[dst]
+    batsman_wants[id] = dst;   // RAG edge: id -> crease[dst]
 
     // exit on match_end so the thread doesn't block forever when
     // the inning ends while batsmen are in the hold-and-wait wait loop.
@@ -193,8 +193,8 @@ void* Batsman(void* arg){
     while(!match_end){
         wait_for_next_ball_bat();
         pthread_mutex_lock(&pitch_lock);
-bool is_striker = (striker_id == id);
-pthread_mutex_unlock(&pitch_lock);
+        bool is_striker = (striker_id == id);
+        pthread_mutex_unlock(&pitch_lock);
 
         if(is_striker){
             wait_ball_thrown();

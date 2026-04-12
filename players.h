@@ -17,7 +17,7 @@ const std::string INDIA[11] = {
      "Ravindra Jadeja",     // No. 7 (All-rounder)
      "Axar Patel",          // No. 8 (Bowling all-rounder)
      "Kuldeep Yadav",       // No. 9 (Spinner)
-     "Mohammed Siraj",     // No. 10 (Pace)
+     "Mohammed Siraj",     // No. 10 (Pace) (Death over specialist)
      "Jasprit Bumrah",     // No. 11 (Death over specialist)
 };
 
@@ -31,7 +31,7 @@ const std::string PAKISTAN[11] = {
      "Imad Wasim",          // No. 7 (All-rounder)
      "Mohammad Wasim Jr.",  // No. 8 (Fast bowling all-rounder)
      "Shaheen Afridi",      // No. 9 (Pace)
-     "Naseem Shah",        // No. 10 (Pace)
+     "Naseem Shah",        // No. 10 (Pace) (Death over specialist)
      "Haris Rauf",         // No. 11 (Death over specialist)
 };
 
@@ -50,5 +50,5 @@ inline bool can_bowl(int team, int id) {
 
 // Death over specialist: Bumrah (India, id=11), Haris Rauf (Pakistan, id=11)
 inline bool is_death_specialist(int team, int id) {
-    return id == 11;   
+    return id == 11  || id == 10;  
 }

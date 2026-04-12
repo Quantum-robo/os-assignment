@@ -59,14 +59,14 @@ void wait_for_fielders_to_receive_new_bowler(){
 
 void set_next_ball_ready(){
     // Initialise RAG for this delivery.
-    // 10% chance: both batsmen will use hold-and-wait → guaranteed deadlock.
+    // 10% chance: both batsmen will use hold-and-wait -> guaranteed deadlock.
     pthread_mutex_lock(&rag_lock);
     crease_held_by[0]      = striker_id;
     crease_held_by[1]      = non_striker_id;
     for(int i = 0; i <= 11; i++) batsman_wants[i] = -1;
     deadlock_detected      = false;
     deadlock_victim_id     = 0;
-    run_collision_possible = (rand() % 80 == 0);   // ~1.25% per ball → ~1-2 per inning
+    run_collision_possible = (rand() % 80 == 0);   // ~1.25% per ball -> ~1-2 per inning
     if (run_collision_possible)
         std::cout << "[RAG] Collision scenario this delivery — hold-and-wait active\n";
     pthread_mutex_unlock(&rag_lock);
@@ -180,59 +180,70 @@ void* Umpire(void* arg){
             set_next_ball_ready();
 
             wait_for_all_players_to_play_ball();
-            curr_ball++;
-
-            if(curr_ball > 6){
-             curr_ball = 1;
-             curr_over++;
-            }
+            curr_ball = balls_played_in_over;
+            curr_over = over_finished;
+            
 
             // Snapshot IDs now — before result clears striker/bowler/catcher slots
-          int snap_striker     = striker_id;
-          int snap_non_striker = non_striker_id;
-          int snap_bowler      = curr_bowler_id;
-          int snap_catcher     = catcher_id;
+            int snap_striker     = striker_id;
+            int snap_non_striker = non_striker_id;
+            int snap_bowler      = curr_bowler_id;
+            int snap_catcher     = catcher_id;
 
-            // no player accessing next_ball, all next waiting for result
-          int r = rand() % 100;
-          int bowling_team = 1 - current_team;
+                // no player accessing next_ball, all next waiting for result
+            int r = rand() % 100;
+            int bowling_team = 1 - current_team;
 
-          bool spec = is_death_specialist(bowling_team, snap_bowler);
-          bool tail = is_tail_ender(current_team, snap_striker);
+            bool spec = is_death_specialist(bowling_team, snap_bowler);
+            bool tail = is_tail_ender(current_team, snap_striker);
 
-          // 4-way probability table  [BOWLED, CAUGHT, dot, 1R, 2R, 3R, 4, SIX]
-          // Death specialist bowling: slightly higher wickets, slightly lower runs
-          int tb, tc, td, t1, t2, t3, t4;   // cumulative thresholds
-          if (tail && spec) {
-              tb=12; tc=22; td=55; t1=75; t2=87; t3=94; t4=97; // 12+10+33+20+12+7+3+3
-          } else if (tail) {
-              tb=10; tc=18; td=50; t1=72; t2=84; t3=91; t4=97; // 10+8+32+22+12+7+6+3
-          } else if (spec) {
-              tb=4;  tc=8;  td=36; t1=59; t2=72; t3=81; t4=93; // 4+4+28+23+13+9+12+7
-          } else {
-              tb=2;  tc=4;  td=30; t1=55; t2=70; t3=80; t4=92; // 2+2+26+25+15+10+12+8
-          }
+            // 4-way probability table  [BOWLED, CAUGHT, dot, 1R, 2R, 3R, 4, SIX]
+            // Death specialist bowling: slightly higher wickets, slightly lower runs
+            int tb, tc, td, t1, t2, t3, t4;   // cumulative thresholds
+            if (tail && spec) {
+                tb=12; tc=22; td=55; t1=75; t2=87; t3=94; t4=97; // 12+10+33+20+12+7+3+3
+            } else if (tail) {
+                tb=10; tc=18; td=50; t1=72; t2=84; t3=91; t4=97; // 10+8+32+22+12+7+6+3
+            } else if (spec) {
+                tb=4;  tc=8;  td=36; t1=59; t2=72; t3=81; t4=93; // 4+4+28+23+13+9+12+7
+            } else {
+                tb=2;  tc=4;  td=30; t1=55; t2=70; t3=80; t4=92; // 2+2+26+25+15+10+12+8
+            }
 
-if(r < tb){
-    wickets++; over_wickets++;
-    batsmen_chosen--;
-    get_new_batsman(STRIKER);
-    last_event = "BOWLED";
-}
-else if(r < tc){
-    wickets++; over_wickets++;
-    batsmen_chosen--;
-    get_new_batsman(STRIKER);
-    last_event = "CAUGHT by " + player_name(bowling_team, snap_catcher);
-}
-else if(r < td){ last_event = "dot"; }
-else if(r < t1){ total_runs += 1; over_runs += 1; last_event = "1 run"; }
-else if(r < t2){ total_runs += 2; over_runs += 2; last_event = "2 runs"; }
-else if(r < t3){ total_runs += 3; over_runs += 3; last_event = "3 runs"; }
-else if(r < t4){ total_runs += 4; over_runs += 4; last_event = "FOUR"; }
-else           { total_runs += 6; over_runs += 6; last_event = "SIX"; }
-            // make result
-            // run_out
+            int tw = 2;
+            int w = rand() % 100;
+            int r2 = rand() % t4;
+            if(w < tw){// if wide
+                if(r2 < td){ last_event = "dot"; }
+                else if(r2 < t1){ total_runs += 1; over_runs += 1; last_event = "1 run"; }
+                else if(r2 < t2){ total_runs += 2; over_runs += 2; last_event = "2 runs"; }
+                else if(r2 < t3){ total_runs += 3; over_runs += 3; last_event = "3 runs"; }
+                else if(r2 < t4){ total_runs += 4; over_runs += 4; last_event = "FOUR"; }
+
+                total_runs += 1; over_runs += 1; // for the wide itself
+                last_event = "WIDE | " + last_event;
+                balls_played_in_over--; // wide doesn't count as a legal delivery
+            }else{ // if not wide
+                if(r < tb){
+                    wickets++; over_wickets++;
+                    batsmen_chosen--;
+                    get_new_batsman(STRIKER);
+                    last_event = "BOWLED";
+                }
+                else if(r < tc){
+                    wickets++; over_wickets++;
+                    batsmen_chosen--;
+                    get_new_batsman(STRIKER);
+                    last_event = "CAUGHT by " + player_name(bowling_team, snap_catcher);
+                }
+                else if(r < td){ last_event = "dot"; }
+                else if(r < t1){ total_runs += 1; over_runs += 1; last_event = "1 run"; }
+                else if(r < t2){ total_runs += 2; over_runs += 2; last_event = "2 runs"; }
+                else if(r < t3){ total_runs += 3; over_runs += 3; last_event = "3 runs"; }
+                else if(r < t4){ total_runs += 4; over_runs += 4; last_event = "FOUR"; }
+                else           { total_runs += 6; over_runs += 6; last_event = "SIX"; }
+            }
+
             
           // ── Deadlock-based Run-Out detection ─────────────────────────────────
           // If the DeadlockDetector identified a victim this delivery and the ball
@@ -274,29 +285,29 @@ else           { total_runs += 6; over_runs += 6; last_event = "SIX"; }
 
             pthread_mutex_lock(&print_lock);
 
-          // Use snapshots so wicket/over-change can't race with the print
-          int batting_team = current_team;
+            // Use snapshots so wicket/over-change can't race with the print
+            int batting_team = current_team;
 
-          std::cout << "[" << curr_over << "." << curr_ball << "] "
-          << player_name(bowling_team, snap_bowler)
-          << " to " << player_name(batting_team, snap_striker)
+            std::cout << "[" << curr_over << "." << curr_ball << "] "
+            << player_name(bowling_team, snap_bowler)
+            << " to " << player_name(batting_team, snap_striker)
 
-          << " | Score: " << total_runs << "/" << wickets
-          << " | " << last_event << "\n";
+            << " | Score: " << total_runs << "/" << wickets
+            << " | " << last_event << "\n";
 
-// 1. swap for odd runs
-if(last_event == "1 run" || last_event == "3 runs"){
-    int temp = striker_id;
-    striker_id = non_striker_id;
-    non_striker_id = temp;
-}
+            // 1. swap for odd runs
+            if(last_event == "1 run" || last_event == "3 runs"){
+                int temp = striker_id;
+                striker_id = non_striker_id;
+                non_striker_id = temp;
+            }
 
-// 2. swap at end of over
-if(new_over){
-    int temp = striker_id;
-    striker_id = non_striker_id;
-    non_striker_id = temp;
-}
+            // 2. swap at end of over
+            if(new_over){
+                int temp = striker_id;
+                striker_id = non_striker_id;
+                non_striker_id = temp;
+            }
             pthread_mutex_unlock(&print_lock);
 
             // end-of-over summary + scheduler call AFTER ball commentary is printed

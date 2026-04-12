@@ -14,7 +14,7 @@ static int rr_idx = 0;
 bool is_high_intensity() {
     // Priority scheduling only during a run chase (inning 2) from the 19th over onward.
     // Assumption: death specialist matters most when defending a target under pressure;
-    // over_finished >= NUM_OVERS-2 means 18 overs are done → 19th over is now being bowled.
+    // over_finished >= NUM_OVERS-2 means 18 overs are done -> 19th over is now being bowled.
     return current_team == 1 && over_finished >= NUM_OVERS - 2;
 }
 
@@ -43,7 +43,7 @@ void scheduler_init(int bowling_team, int batting_team) {
     std::cout << "\n[Scheduler] ── Inning setup ──────────────────────────────\n"
               << "[Scheduler] Bowling team : " << (bowling_team==0 ? TEAM1_NAME : TEAM2_NAME) << "\n"
               << "[Scheduler] Algorithm : Round-Robin (overs) | "
-              << (sjf_scheduler ? "SJF" : "FCFS") << " | Priority (last over, inning 2)\n"
+              << (sjf_scheduler ? "SJF" : "FCFS") << " | Priority (last 2 overs, inning 2)\n"
               << "[Scheduler] Batting order:\n";
     std::string mode_tag = sjf_scheduler ? "  [SJF]" : "  [FCFS]";
     for (int i = 1; i <= 11; i++) {
@@ -61,7 +61,7 @@ int scheduler_next_bowler(int bowling_team, int outgoing_id,
         bowler_ctx[outgoing_id].runs_given    += runs_this_over;
         bowler_ctx[outgoing_id].wickets_taken += wickets_this_over;
 
-        std::cout << "[SCHEDULER] Context-switch OUT → "
+        std::cout << "[SCHEDULER] Context-switch OUT -> "
                   << player_name(bowling_team, outgoing_id)
                   << " | Total runs given: "
                   << bowler_ctx[outgoing_id].runs_given    << " | "
@@ -71,12 +71,13 @@ int scheduler_next_bowler(int bowling_team, int outgoing_id,
     }
 
     if (bowl_rotation.empty()) return 0;
+    if(match_end) return 0;
 
-    //PRIORITY SCHEDULING: (last over is given to death over specialist)
+    //PRIORITY SCHEDULING: (last 2 over is given to death over specialist)
     if (is_high_intensity()) {
         for (int id : bowl_rotation) {
-            if (is_death_specialist(bowling_team, id)) {
-                std::cout << "[SCHEDULER] PRIORITY (last over) → "
+            if (is_death_specialist(bowling_team, id) && id != outgoing_id) {
+                std::cout << "[SCHEDULER] PRIORITY (last 2 over) -> "
                           << player_name(bowling_team, id) << " gets the ball\n";
                 return id;
             }
@@ -92,7 +93,7 @@ int scheduler_next_bowler(int bowling_team, int outgoing_id,
     } while (bowl_rotation[rr_idx] == outgoing_id && tries < n);
 
     int next_id = bowl_rotation[rr_idx];
-    std::cout << "[SCHEDULER] RR next bowler → "
+    std::cout << "[SCHEDULER] RR next bowler -> "
               << player_name(bowling_team, next_id) << "\n";
     return next_id;
 }
